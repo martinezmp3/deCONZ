@@ -6,7 +6,7 @@
 # I will work on this driver as long as hubitat do not support the devices I use if/or hubitat release an official support
 
 You will need:
-- pi whit deCONZ https://www.phoscon.de/en/conbee2/install
+- deCONZ https://www.phoscon.de/en/conbee2/install
 - the 2 driver so far more comming
 
 to install
