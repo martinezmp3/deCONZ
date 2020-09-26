@@ -3,9 +3,11 @@ metadata {
         capability "PushableButton"
         capability "HoldableButton"
         capability "DoubleTapableButton"
+        capability "ReleasableButton"
         command "hold" ,["NUMBER"]            ///   hold(<button number that was held>)
         command "push" ,["NUMBER"]            ///   push(<button number that was pushed>)
         command "doubleTap" ,["NUMBER"]            ///   doubleTap(<button number that was double tapped>)
+        command "release" ,["NUMBER"]
         command "reciveData", ["string"]
         attribute "numberOfButtons", "NUMBER" ///	NUMBER	numberOfButtons		//sendEvent(name:"numberOfButtons", value:<number of physical buttons on the device>)	
         attribute "pushed", "NUMBER"          ///	NUMBER	pushed				//sendEvent(name:"pushed", value:<button number that was pushed>)
@@ -21,16 +23,22 @@ preferences {
 
 def hold (button){
     log.debug "button ${button} hold"
-    sendEvent(name:"held", value:button)
+    sendEvent(name:"held", value:button, isStateChange: true)
 }
 def doubleTap (button){
     log.debug "button ${button} doubleTap"
-    sendEvent(name:"doubleTapped", value:button)
+    sendEvent(name:"doubleTapped", value:button, isStateChange: true)
 }
 def push (button){
     log.debug "button ${button} push"
-    sendEvent(name:"pushed", value:button)
+    sendEvent(name:"pushed", value:button, isStateChange: true)
 }
+
+def release (button){
+    log.debug "button ${button} re"
+    sendEvent(name:"release", value:button, isStateChange: true)
+}
+
 def updateBattery (bat){
     log.debug "new batt:${bat}"
     sendEvent(name: "battery", value: bat)
@@ -46,7 +54,10 @@ def reciveData (data){
         push(button)
     }
     if (action == 3){
-//        push(button)
+        release(button)
+    }
+    if (action == 4){
+        doubleTap(button)
     }
     //log.debug data
     
