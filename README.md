@@ -1,8 +1,9 @@
 # deCONZ
-# This driver is to integrate deCONZ rest api  to hubitat work in progress this is to use those trouble zig bee devices that hubitat is not 
+# This driver is to integrate deCONZ rest api  to hubitat 
+# work in progress this is to use those trouble zig bee devices that hubitat is not 
 # supporting because compatibility stability issues 
 # like some of the ikea devices like the button dimmer and control. an acara buttons
-# use at your onw risk like all my drivers i write it for my onw use and share for free
+# use at your onw risk like all my drivers I write it for my onw use and share for free
 # I will work on this driver as long as hubitat do not support the devices I use if/or hubitat release an official support
 
 You will need:
