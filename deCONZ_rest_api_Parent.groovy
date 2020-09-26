@@ -178,7 +178,7 @@ def connect (){
         return
     }
     try {
-    interfaces.webSocket.connect("ws://${settings.ip}:443/")//Connect the webSocket
+    interfaces.webSocket.connect("ws://${settings.ip}:${settings.WebSocketPort}/")//Connect the webSocket
     } 
     catch(e) {
         if (logEnable) log.debug "initialize error: ${e.message}"
