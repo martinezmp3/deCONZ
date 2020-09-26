@@ -150,7 +150,7 @@ def parse(String description) {
         def children = getChildDevice("child-${json.uniqueid}")
         if (!children){
             if (logEnable) log.debug "Children NOT found creating one"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: user, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: user, isComponent: false])
         }
         children.reciveData(json.state.buttonevent)
 //        log.debug description
