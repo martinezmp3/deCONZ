@@ -34,7 +34,7 @@ preferences {
     
 }
 def GetConfiguration (){
-    log.debug "Updating configuration"
+    if (logEnable) log.debug "Updating configuration"
     def getParams = [
         uri: "http://${settings.ip}:${settings.port}/api/${settings.API_key}/config",
         headers: ["Accept": "application/json, text/plain, */*"],
@@ -45,7 +45,7 @@ def GetConfiguration (){
     asynchttpGet("GetConfigurationCallBack",getParams)
 }
 def GetConfigurationCallBack (response, data){
-    log.debug "GetConfigurationCallBack"
+    if (logEnable) log.debug "GetConfigurationCallBack"
     if (response.hasError()){
         log.debug "got error # ${response.getStatus()} ${response.getErrorMessage()}"
     }
@@ -58,7 +58,7 @@ def GetConfigurationCallBack (response, data){
     }
 }
 def processCallBack(response, data) {
-    log.debug "processCallBack"
+    if (logEnable) log.debug "processCallBack"
     if (response.hasError()){
         log.debug "got error # ${response.getStatus()} ${response.getErrorMessage()}"
     }
@@ -68,7 +68,7 @@ def processCallBack(response, data) {
     }
 }
 def GetApiKeyCallBack(response, data) {
-    log.debug "GetApiKeyCallBack"
+    if (logEnable) log.debug "GetApiKeyCallBack"
     if (response.hasError()){
         log.debug "got error # ${response.getStatus()} ${response.getErrorMessage()}"
     }
@@ -84,10 +84,11 @@ def GetApiKeyCallBack(response, data) {
     }
 }
 def webSocketStatus(String status){
-    log.debug "Connection status: ${status}"
+    if (logEnable) log.debug "Connection status: ${status}"
     
 }
 def GetApiKey (){
+    if (logEnable) log.debug "GetApiKey"
     def postParams = [
 		uri: "http://${settings.ip}:${settings.port}/api/",
         headers: ["Accept": "application/json, text/plain, */*"],
@@ -98,6 +99,7 @@ def GetApiKey (){
     asynchttpPost("GetApiKeyCallBack",postParams)
 }
 def GetRequest (String request){
+    if (logEnable) log.debug "GetRequest"
     def getParams = [
         uri: "http://${settings.ip}:${settings.port}/api/${settings.API_key}/${request}",
         headers: ["Accept": "application/json, text/plain, */*"],
@@ -108,6 +110,7 @@ def GetRequest (String request){
     asynchttpGet("processCallBack",getParams)
 }
 def PutRequest (String request, String body){ 
+    if (logEnable) log.debug "PutRequest"
     url = "http://${settings.ip}:${settings.port}/api/${settings.API_key}/${request}"
     log.debug ("uri = ${url} body = ${body}")
     def getParams = [
@@ -122,8 +125,7 @@ def PutRequest (String request, String body){
 }
 
 def discover(){
-    log.debug "Discovering hub"
-    if (logEnable) log.debug "Sending on GET request to [https://dresden-light.appspot.com/discover]"
+    if (logEnable) log.debug "Discovering hub"
     try {
         httpGet("https://dresden-light.appspot.com/discover") { resp ->
             if (resp.success) {
@@ -146,10 +148,11 @@ def discover(){
 }
 
 def parse(String description) {
+    if (logEnable) log.debug "parse call"
     def json = null;
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
-        log.debug "recive: ${json}"    
+        if (logEnable) log.debug "recive: ${json}"    
         if(json == null){
             log.warn "String description not parsed"
             return
@@ -158,40 +161,33 @@ def parse(String description) {
         log.error("Failed to parse json e = ${e}")
         return
     }
-    //log.debug "parse call"
     if (json.state && json.state.buttonevent){
-        log.debug json.uniqueid
-        log.debug json.state.buttonevent
         def children = getChildDevice("child-${json.uniqueid}")
         if (!children){
-            if (logEnable) log.debug "Children NOT found creating one"
+            log.warn "Children NOT found creating one"
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: "Button(${json.uniqueid})", ID: json.id, isComponent: false])
         }
         children.reciveData(json.state.buttonevent)
+        if (logEnable) log.debug "Update for ${children.getLabel()}"
         if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
-        
-//        log.debug description
     }
     if (json.state && json.state.presence!=NULL){
-        log.debug json.uniqueid
-        log.debug json.state.presence
         def children = getChildDevice("child-${json.uniqueid}")
         if (!children){
-            if (logEnable) log.debug "Children NOT found creating one"
+            log.warn "Children NOT found creating one"
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Motion", "child-${json.uniqueid}", [name: "Motion(${json.uniqueid})", label: "Motion(${json.uniqueid})", ID: json.id, isComponent: false])
         }
         children.updateMotion(json.state.presence)
+        if (logEnable) log.debug "Update for ${children.getLabel()} active = ${json.state.presence}"
         if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
-//        log.debug description
     }
     if (json.state && json.r =="lights"){
-        log.debug json.uniqueid
-        log.debug json.state.on
         def children = getChildDevice("child-${json.uniqueid}")
         if (!children){
-            if (logEnable) log.debug "Children NOT found creating one"
+            log.warn "Children NOT found creating one"
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "Light(${json.uniqueid})", label: "Light(${json.uniqueid})", ID: json.id , isComponent: false])
         }
+        if (logEnable) log.debug "Update for ${children.getLabel()} on = ${json.state.on}"
         children.updatePower(json.state.on)
         if (json.state.bri) children.updateBri(json.state.bri)
         if (json.state.colormode) children.updateColormode(json.state.colormode)
@@ -200,11 +196,11 @@ def parse(String description) {
     
     if (json.config && json.config.battery){
         def children = getChildDevice("child-${json.uniqueid}")
-        log.debug "Battery Update for child-${json.uniqueid} value:${json.config.battery}"
+        if (logEnable) log.debug "Battery Update for child-${json.uniqueid} value:${json.config.battery}"
         if (children){
             children.updateBattery(json.config.battery)
         }
-        if (!children && logEnable) log.debug "Unable to update battery children not avalinble"
+        if (!children) log.warn "Unable to update battery children not avalinble"
     }
 //    log.debug description
       
@@ -214,14 +210,18 @@ def logsOff(){
     device.updateSetting("logEnable",[value:"false",type:"bool"])
 }
 def installed() {
-    log.debug "installed() called"
-    updated()
+    if (logEnable) log.debug "installed() called"
+    //updated()
+}
+def configure() {
+    discover()
 }
 def updated() {
-    log.info "updated() called"
-    //Unschedule any existing schedules
+    if (logEnable) log.info "updated() called"
     unschedule()
     initialize()
+    close()
+    connect()
 }
 def connect (){
     if (!ip) {
@@ -237,7 +237,7 @@ def connect (){
     }
 }
 def initialize() {
-    log.info "initialize() called"
+    if (logEnable) log.info "initialize() called"
 }
 def close (){
     interfaces.webSocket.close()
