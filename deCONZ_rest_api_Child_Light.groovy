@@ -15,6 +15,7 @@ metadata {
         capability "ColorControl"
         capability "ColorTemperature"
         capability "SwitchLevel"
+        capability "Switch"
         attribute "colorName", "String" 
         attribute "colorTemperature", "Number"
         attribute "colormode", "String" 
@@ -46,6 +47,8 @@ def updateColormode (updateValue) {
 def updateBri (updateValue) {
     if (logEnable) log.debug "update updateBri: ${updateValue}"
     sendEvent(name: "bri", value: updateValue)
+    Newlevel = Math.round(updateValue*100/254)
+    sendEvent(name: "level", value: Newlevel)
 }
 def updateCt (updateValue) {
     if (logEnable) log.debug "update colorTemperature: ${updateValue}"
