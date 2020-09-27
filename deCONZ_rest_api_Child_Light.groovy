@@ -1,10 +1,11 @@
 /* 
-child driver fo deCONZ_rest_api Light
+Parent driver fo deCONZ_rest_api 
 This driver is to control the deCONZ_rest_api from the hubitat hub. 
 I wrote this diver for personal use. If you decide to use it, do it at your own risk. 
 No guarantee or liability is accepted for damages of any kind. 
-        09/26/20 intial release 
-        09/29/20 add suport for motion sensor and Lights debug
+        09/25/20 intial release 
+        09/26/20 add suport for motion sensor and Lights debug
+        09/27/20 add autodiscover after creation bug fix and clde cleaing  
 */
 
 metadata {
