@@ -8,11 +8,11 @@
 
 You will need:
 - deCONZ https://www.phoscon.de/en/conbee2/install
-- the 2 driver so far more comming
+- the 4 drivers so far more comming
 
 to install
 - add the devices to your Phoscon-GW 
-- add the 2 driver to your hub
+- add the 4 driver to your hub
 - create a virtual driver with the parent driver
 - on the device page click discover that will set the ip of the pi then refresh the page you will see the ip
 - now you need the api key go to the hub page http://you_Phoscon_ip
