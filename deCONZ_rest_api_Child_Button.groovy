@@ -1,3 +1,12 @@
+/* 
+child driver fo deCONZ_rest_api Button
+This driver is to control the deCONZ_rest_api from the hubitat hub. 
+I wrote this diver for personal use. If you decide to use it, do it at your own risk. 
+No guarantee or liability is accepted for damages of any kind. 
+        09/26/20 intial release 
+        09/29/20 add suport for motion sensor and Lights debug
+*/
+
 metadata {
     definition (name: "deCONZ_rest_api_Child_Button", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:") {
         capability "PushableButton"
@@ -14,6 +23,8 @@ metadata {
         attribute "held", "NUMBER"            ///   NUMBER	held				//sendEvent(name:"held", value:<button number that was held>)
         attribute "doubleTapped","NUMBER"	  ///                               //sendEvent(name:"doubleTapped", value:<button number that was double tapped>)
         attribute "battery", "float"
+        attribute "lastUpdated", "String"
+        attribute "ID", "String"
         
     }
 }
@@ -22,31 +33,37 @@ preferences {
 }
 
 def hold (button){
-    log.debug "button ${button} hold"
+    if (logEnable) log.debug "button ${button} hold"
     sendEvent(name:"held", value:button, isStateChange: true)
 }
 def doubleTap (button){
-    log.debug "button ${button} doubleTap"
+    if (logEnable) log.debug "button ${button} doubleTap"
     sendEvent(name:"doubleTapped", value:button, isStateChange: true)
 }
 def push (button){
-    log.debug "button ${button} push"
+    if (logEnable) log.debug "button ${button} push"
     sendEvent(name:"pushed", value:button, isStateChange: true)
 }
 
 def release (button){
-    log.debug "button ${button} re"
+    if (logEnable) log.debug "button ${button} release"
     sendEvent(name:"release", value:button, isStateChange: true)
 }
 
+def updateLastUpdated (date){
+    if (logEnable) log.debug "Last Update:${date}"
+    sendEvent(name: "lastUpdated", value: date)
+}
+
+
 def updateBattery (bat){
-    log.debug "new batt:${bat}"
+    if (logEnable) log.debug "new batt:${bat}"
     sendEvent(name: "battery", value: bat)
 }
 def reciveData (data){
     int button = data.toInteger()/1000
     int action = data.toInteger() - button *1000
-    log.debug "button = ${button} action = ${action}"
+    if (logEnable) log.debug "button = ${button} action = ${action}"
     if (action == 1){
         hold(button)
     }
@@ -62,7 +79,7 @@ def reciveData (data){
     //log.debug data
     
     if (button >  device.currentValue("numberOfButtons") ){
-        log.debug "updatating number of butoon from ${device.currentValue("numberOfButtons")} to ${button}"
+        if (logEnable) log.debug "updatating number of butoon from ${device.currentValue("numberOfButtons")} to ${button}"
         sendEvent(name:"numberOfButtons", value: button, isStateChange: true)
     }
 }
