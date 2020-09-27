@@ -1,3 +1,14 @@
+/* 
+Parent driver fo deCONZ_rest_api 
+This driver is to control the deCONZ_rest_api from the hubitat hub. 
+I wrote this diver for personal use. If you decide to use it, do it at your own risk. 
+No guarantee or liability is accepted for damages of any kind. 
+        09/25/20 intial release 
+        09/29/20 add suport for motion sensor and Lights debug
+*/
+
+
+
 metadata {
     definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:") {
         capability "Initialize"
@@ -10,6 +21,7 @@ metadata {
         command "GetRequest",["string"]
         command "PutRequest",["string", "string"]
         command "GetConfiguration"
+//        command "webSocketStatus"
     }
 }
 preferences {
@@ -72,7 +84,8 @@ def GetApiKeyCallBack(response, data) {
     }
 }
 def webSocketStatus(String status){
-    log.debug status
+    log.debug "Connection status: ${status}"
+    
 }
 def GetApiKey (){
     def postParams = [
@@ -107,6 +120,7 @@ def PutRequest (String request, String body){
 	]
     asynchttpPut("processCallBack",getParams)
 }
+
 def discover(){
     log.debug "Discovering hub"
     if (logEnable) log.debug "Sending on GET request to [https://dresden-light.appspot.com/discover]"
@@ -129,12 +143,13 @@ def discover(){
     } catch (Exception e) {
         log.warn "Call to on failed: ${e.message}"
     }
-}              
+}
+
 def parse(String description) {
     def json = null;
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
-        log.debug "${json}"    
+        log.debug "recive: ${json}"    
         if(json == null){
             log.warn "String description not parsed"
             return
@@ -150,10 +165,46 @@ def parse(String description) {
         def children = getChildDevice("child-${json.uniqueid}")
         if (!children){
             if (logEnable) log.debug "Children NOT found creating one"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: user, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: "Button(${json.uniqueid})", ID: json.id, isComponent: false])
         }
         children.reciveData(json.state.buttonevent)
+        if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
+        
 //        log.debug description
+    }
+    if (json.state && json.state.presence!=NULL){
+        log.debug json.uniqueid
+        log.debug json.state.presence
+        def children = getChildDevice("child-${json.uniqueid}")
+        if (!children){
+            if (logEnable) log.debug "Children NOT found creating one"
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Motion", "child-${json.uniqueid}", [name: "Motion(${json.uniqueid})", label: "Motion(${json.uniqueid})", ID: json.id, isComponent: false])
+        }
+        children.updateMotion(json.state.presence)
+        if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
+//        log.debug description
+    }
+    if (json.state && json.r =="lights"){
+        log.debug json.uniqueid
+        log.debug json.state.on
+        def children = getChildDevice("child-${json.uniqueid}")
+        if (!children){
+            if (logEnable) log.debug "Children NOT found creating one"
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "Light(${json.uniqueid})", label: "Light(${json.uniqueid})", ID: json.id , isComponent: false])
+        }
+        children.updatePower(json.state.on)
+        if (json.state.bri) children.updateBri(json.state.bri)
+        if (json.state.colormode) children.updateColormode(json.state.colormode)
+        if (json.state.ct) children.updateCt(json.state.ct)
+    }
+    
+    if (json.config && json.config.battery){
+        def children = getChildDevice("child-${json.uniqueid}")
+        log.debug "Battery Update for child-${json.uniqueid} value:${json.config.battery}"
+        if (children){
+            children.updateBattery(json.config.battery)
+        }
+        if (!children && logEnable) log.debug "Unable to update battery children not avalinble"
     }
 //    log.debug description
       
@@ -178,7 +229,7 @@ def connect (){
         return
     }
     try {
-    interfaces.webSocket.connect("ws://${settings.ip}:${settings.WebSocketPort}/")//Connect the webSocket
+        interfaces.webSocket.connect("ws://${settings.ip}:${settings.WebSocketPort}/")//Connect the webSocket
     } 
     catch(e) {
         if (logEnable) log.debug "initialize error: ${e.message}"
