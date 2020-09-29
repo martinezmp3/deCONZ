@@ -102,23 +102,23 @@ def webSocketStatus(String status){
     }
     if (status.contains("failure")){
         state.timeoutCount += 1
-        if ((state.timeoutCount == 100) && (state.timeToRetry == 10)){ //try to connect every 10 sec 100 times
+        if ((state.timeoutCount == 50) && (state.timeToRetry == 10)){ //try to connect every 10 sec 100 times
             state.status = "warning"
             state.timeToRetry = 30
         }
-        if ((state.timeoutCount == 200) && (state.timeToRetry == 30)){ //try to connect every 30 sec 100 times
+        if ((state.timeoutCount == 100) && (state.timeToRetry == 30)){ //try to connect every 30 sec 100 times
             state.status = "warning"
             state.timeToRetry = 1800
         }
-        if ((state.timeoutCount == 300) && (state.timeToRetry == 1800)){ //try to connect every 1/2 hour 100 times
+        if ((state.timeoutCount == 150) && (state.timeToRetry == 1800)){ //try to connect every 1/2 hour 100 times
             state.status = "error"
             state.timeToRetry = 3600
         }
-        if ((state.timeoutCount == 400) && (state.timeToRetry == 3600)){ //try to connect every 1 hour 100 times
+        if ((state.timeoutCount == 200) && (state.timeToRetry == 3600)){ //try to connect every 1 hour 100 times
             state.status = "critical error"
             state.timeToRetry = 5400
         }
-        if (state.timeoutCount == 50){state.status = "fail"}
+        if (state.timeoutCount == 250){state.status = "fail"}
 
         log.error "conection problem: ${status} retry in ${state.timeToRetry} second atemp(${state.timeoutCount})"
 
