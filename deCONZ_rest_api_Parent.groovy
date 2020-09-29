@@ -14,6 +14,9 @@ metadata {
     definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:") {
         capability "Initialize"
         capability "Refresh"
+        attribute "timeoutCount", "Number"
+        attribute "timeToRetry", "Number"
+        attribute "status", "string"
         command "SendMsg", ["string"]
         command "close"
         command "discover"
@@ -87,8 +90,42 @@ def GetApiKeyCallBack(response, data) {
     }
 }
 def webSocketStatus(String status){
+    if (state.timeoutCount == null || state.timeToRetry == null){
+        state.timeoutCount = 0
+        state.timeToRetry = 10
+    }
     if (logEnable) log.debug "Connection status: ${status}"
-    
+    if (status.contains("open")){
+        state.timeoutCount = 0
+        state.timeToRetry = 10
+        state.status = "OK"
+    }
+    if (status.contains("failure")){
+        state.timeoutCount += 1
+        if ((state.timeoutCount == 100) && (state.timeToRetry == 10)){ //try to connect every 10 sec 100 times
+            state.status = "warning"
+            state.timeToRetry = 30
+        }
+        if ((state.timeoutCount == 200) && (state.timeToRetry == 30)){ //try to connect every 30 sec 100 times
+            state.status = "warning"
+            state.timeToRetry = 1800
+        }
+        if ((state.timeoutCount == 300) && (state.timeToRetry == 1800)){ //try to connect every 1/2 hour 100 times
+            state.status = "error"
+            state.timeToRetry = 3600
+        }
+        if ((state.timeoutCount == 400) && (state.timeToRetry == 3600)){ //try to connect every 1 hour 100 times
+            state.status = "critical error"
+            state.timeToRetry = 5400
+        }
+        if (state.timeoutCount == 50){state.status = "fail"}
+
+        log.error "conection problem: ${status} retry in ${state.timeToRetry} second atemp(${state.timeoutCount})"
+
+        if ((state.status != "fail") && (settings.ip !=null) && (settings.WebSocketPort!=null)){
+            runIn(state.timeToRetry,"connect")
+        }
+    }   
 }
 def GetApiKey (){
     if (logEnable) log.debug "GetApiKey"
