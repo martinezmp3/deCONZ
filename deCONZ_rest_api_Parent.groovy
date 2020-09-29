@@ -5,7 +5,9 @@ I wrote this diver for personal use. If you decide to use it, do it at your own 
 No guarantee or liability is accepted for damages of any kind. 
         09/25/20 intial release 
         09/26/20 add suport for motion sensor and Lights debug
-        09/27/20 add autodiscover after creation bug fix and clde cleaing  
+        09/27/20 add autodiscover after creation bug fix and clde cleaing
+	09/28/20 import name from deCONZ on child creation
+	09/29/20 add connection drop recover 
 */
 
 
