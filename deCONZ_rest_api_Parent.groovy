@@ -4,13 +4,16 @@ This driver is to control the deCONZ_rest_api from the hubitat hub.
 I wrote this diver for personal use. If you decide to use it, do it at your own risk. 
 No guarantee or liability is accepted for damages of any kind. 
         09/25/20 intial release 
-        09/26/20 add suport for motion sensor and Lights debug
-        09/27/20 add autodiscover after creation bug fix and clde cleaing
-	09/28/20 import name from deCONZ on child creation
-	09/29/20 add connection drop recover 
+        09/25/20 doubleTap(button) (report it by @Royski)
+        09/26/20 add suport for motion sensor and Lights 
+        09/27/20 add autodiscover after creation bug fix and code cleaing
+	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	    09/29/20 add connection drop recover (report it by@sburke781
+        10/02/20 add reconect after reboot (report it by @sburke781)
+        10/03/20 add refresh funtion call connect () (report it by @sburke781)
+        10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
+        10/04/20 auto rename from and to deCONZ
 */
-
-
 
 metadata {
     definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:") {
@@ -29,6 +32,7 @@ metadata {
         command "GetConfiguration"
 //        command "webSocketStatus"
         command "GetName"
+        command "testCMD"
     }
 }
 preferences {
@@ -39,6 +43,42 @@ preferences {
     input name: "Notifyall", type: "bool", title: "Web sock notif all clients"
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
     
+}
+def testCMD (){
+    def ToDay = new Date().format("MMM dd yyyy", location.timeZone)
+    def Now = new Date().format("h:mm a", location.timeZone)
+    log.debug "OK since ${ToDay} at ${Now}"
+    //log.debug (new Date().format("h:mm a", location.timeZone))
+    
+    //log.debug "OK since ${(new Date().format("yyyy-MM-dd hh:MM:SS", location.timeZone))}"
+}
+def updateCildLabel (ID,Sensor){
+    if (logEnable) log.debug "updatitng childs label"
+    type = "lights"
+    if (Sensor) type = "sensors"
+    log.debug type
+    def getParams = [
+        uri: "http://${settings.ip}:${settings.port}/api/${settings.API_key}/${type}/${ID}",
+        headers: ["Accept": "application/json, text/plain, */*"],
+		requestContentType: 'application/json',
+		contentType: 'application/json',
+		//body : ["devicetype" : "Hubitat"]
+	]
+    asynchttpGet("updateCildLabelCallBack",getParams)
+}
+def updateCildLabelCallBack (response, data){
+    if (logEnable) log.debug "updateCildLabelCallBack ${data}"
+    if (response.hasError()){
+        log.error "got error # ${response.getStatus()} ${response.getErrorMessage()}"
+    }
+    if (!response.hasError()){
+        if (logEnable) log.debug "no error responce = ${response.getData()}"
+        json = response.getJson()
+        children = getChildDevice("child-${json.uniqueid}")
+        if (logEnable) log.debug "changing lable from ${children.getLabel()} to ${json.name}"
+        children.setLabel(json.name)
+        //log.debug response.json.websocketport
+    }
 }
 def GetConfiguration (){
     if (logEnable) log.debug "Updating configuration"
@@ -64,7 +104,6 @@ def GetConfigurationCallBack (response, data){
         device.updateSetting("Notifyall",response.json.websocketnotifyall)
     }
 }
-
 def processCallBack(response, data) {
     if (logEnable) log.debug "processCallBack"
     if (response.hasError()){
@@ -101,29 +140,40 @@ def webSocketStatus(String status){
         state.timeoutCount = 0
         state.timeToRetry = 10
         state.status = "OK"
+        def Day = new Date().format("MMM dd yy", location.timeZone)
+        def Now = new Date().format("h:mm a", location.timeZone)
+        state.message = "OK since ${Day} at ${Now}"
+        if (logEnable) log.debug state.message
+        
     }
     if (status.contains("failure")){
+        if (state.status == "OK"){
+            def Day = new Date().format("MMM dd yy", location.timeZone)
+            def Now = new Date().format("h:mm a", location.timeZone)
+            state.message = "tring to reconnect since ${Day} at ${Now}"
+            state.status = "attempting reconnect"
+        }
         state.timeoutCount += 1
-        if ((state.timeoutCount == 50) && (state.timeToRetry == 10)){ //try to connect every 10 sec 100 times
+        if ((state.timeoutCount == 50) && (state.timeToRetry == 10)){ //try to connect every 10 sec 50 times
             state.status = "warning"
             state.timeToRetry = 30
         }
-        if ((state.timeoutCount == 100) && (state.timeToRetry == 30)){ //try to connect every 30 sec 100 times
-            state.status = "warning"
+        if ((state.timeoutCount == 100) && (state.timeToRetry == 30)){ //try to connect every 30 sec 50 times
+            state.status = "critical warning"
             state.timeToRetry = 1800
         }
-        if ((state.timeoutCount == 150) && (state.timeToRetry == 1800)){ //try to connect every 1/2 hour 100 times
+        if ((state.timeoutCount == 150) && (state.timeToRetry == 1800)){ //try to connect every 1/2 hour 50 times
             state.status = "error"
             state.timeToRetry = 3600
         }
-        if ((state.timeoutCount == 200) && (state.timeToRetry == 3600)){ //try to connect every 1 hour 100 times
+        if ((state.timeoutCount == 200) && (state.timeToRetry == 3600)){ //try to connect every 1 hour 50 times
             state.status = "critical error"
             state.timeToRetry = 5400
         }
-        if (state.timeoutCount == 250){state.status = "fail"}
-
+        if (state.timeoutCount == 250){
+            state.status = "fail"
+        }
         log.error "conection problem: ${status} retry in ${state.timeToRetry} second atemp(${state.timeoutCount})"
-
         if ((state.status != "fail") && (settings.ip !=null) && (settings.WebSocketPort!=null)){
             runIn(state.timeToRetry,"connect")
         }
@@ -140,7 +190,6 @@ def GetApiKey (){
 	]
     asynchttpPost("GetApiKeyCallBack",postParams)
 }
-
 def GetName (){
     request = "lights/4"
     def getParams = [
@@ -167,7 +216,7 @@ def GetRequest (String request){
     asynchttpGet("processCallBack",getParams)
 }
 def PutRequest (String request, String body){ 
-    if (logEnable) log.debug "PutRequest"
+    if (logEnable) log.debug "PutRequest: request:${request}, body ${body}"
     url = "http://${settings.ip}:${settings.port}/api/${settings.API_key}/${request}"
     log.debug ("uri = ${url} body = ${body}")
     def getParams = [
@@ -180,7 +229,6 @@ def PutRequest (String request, String body){
 	]
     asynchttpPut("processCallBack",getParams)
 }
-
 def discover(){
     if (logEnable) log.debug "Discovering hub"
     try {
@@ -203,8 +251,6 @@ def discover(){
         log.warn "Call to on failed: ${e.message}"
     }
 }
-
-
 def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
     if (logEnable) log.debug "addChildCallBack"
         if (response.hasError()){
@@ -228,6 +274,20 @@ def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
         }
+        ///addition
+        if (json.type.toString().contains("ZHAPower")){
+            if (logEnable) log.debug "no error creating On/Off = ${json.name}"
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "ZHAPower(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+        }
+        if (json.type.toString().contains("OpenClose")){
+            if (logEnable) log.debug "no error creating Ligth = ${json.name}"
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Contact", "child-${json.uniqueid}", [name: "contact-sensor(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+        }
+        if (json.type.toString().contains("Temperature")){
+            if (logEnable) log.debug "no error creating Temperature = ${json.name}"
+            children = addChildDevice("hubitat","Virtual Temperature Sensor", "child-${json.uniqueid}", [name: "Temperature(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+        }
+        //end of addition
     }
 }
 def parse(String description) {
@@ -241,7 +301,6 @@ def parse(String description) {
             log.warn "String description not parsed"
             return
         }
-        
         if (!children && json.r != "groups"){
             log.warn "Children NOT found creating one### ${json.r}/${json.id}"
             def getParams = [
@@ -270,7 +329,6 @@ def parse(String description) {
         if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
     }
     if (json.state && json.r =="lights"){
-        
         if (logEnable) log.debug "Update for ${children.getLabel()} on = ${json.state.on}"
         children.updatePower(json.state.on)
         if (json.state.bri) children.updateBri(json.state.bri)
@@ -278,6 +336,18 @@ def parse(String description) {
         if (json.state.ct) children.updateCt(json.state.ct)
     }
     
+    if (json.state && json.state.open!=NULL){
+        if (json.state.open) children.sendEvent(name:"contact", value: "open", isStateChange: true)
+        if (!json.state.open) children.sendEvent(name:"contact", value: "close", isStateChange: true)
+        if (json.state.tampered) children.sendEvent(name:"tamper", value: "detected", isStateChange: true)
+        if (!json.state.tampered) children.sendEvent(name:"tamper", value: "clear", isStateChange: true)
+        if (logEnable) log.debug "Update for ${children.getLabel()} open = ${json.state.open}"
+        if (json.state.lastupdated) children.sendEvent(name:"lastUpdated", value: json.state.lastupdated, isStateChange: true)
+    }
+    if (json.state && json.state.temperature){
+        int tempC = (json.state.temperature.toInteger()/100)
+        children.sendEvent(name:"temperature", value: celsiusToFahrenheit(tempC), isStateChange: true)
+    }
     if (json.config && json.config.battery){
         if (logEnable) log.debug "Battery Update for child-${json.uniqueid} value:${json.config.battery}"
         if (children){
@@ -285,8 +355,6 @@ def parse(String description) {
         }
         if (!children) log.warn "Unable to update battery children not avalinble"
     }
-//    log.debug description
-      
 }
 def logsOff(){
     log.warn "debug logging disabled..."
@@ -303,7 +371,6 @@ def configure() {
 def updated() {
     if (logEnable) log.info "updated() called"
     unschedule()
-    initialize()
     close()
     connect()
 }
@@ -322,7 +389,12 @@ def connect (){
 }
 def initialize() {
     if (logEnable) log.info "initialize() called"
+    connect ()
 }
 def close (){
     interfaces.webSocket.close()
+}
+def refresh(){
+    close ()
+    connect ()
 }
