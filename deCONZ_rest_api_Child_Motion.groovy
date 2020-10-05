@@ -15,11 +15,21 @@ metadata {
         attribute "battery", "float"
 		attribute "lastUpdated", "String"
         attribute "ID", "String"
+        command "SETdeCONZname"
+        command "GETdeCONZname"
     }
 }
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
+
+def SETdeCONZname(){
+    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${device.getLabel()}\"}")
+}
+def GETdeCONZname(){
+    parent.updateCildLabel(getDataValue("ID"),true)
+}
+
 def updateBattery (bat){
     if (logEnable) log.debug "new batt:${bat}"
     sendEvent(name: "battery", value: bat)
