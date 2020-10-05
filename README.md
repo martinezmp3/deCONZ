@@ -12,7 +12,7 @@ You will need:
 
 to install
 - add the devices to your Phoscon-GW 
-- add the 4 driver to your hub
+- add the 6 driver to your hub
 - create a virtual driver with the parent driver
 - on the device page click discover that will set the ip of the pi then refresh the page you will see the ip
 - now you need the api key go to the hub page http://you_Phoscon_ip
