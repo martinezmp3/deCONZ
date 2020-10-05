@@ -24,10 +24,18 @@ metadata {
         attribute "ID", "String"
 //        command "updateStatus", ["bool"]
 //        command "setLevel", ["Number"]
+        command "GETdeCONZname"
+        command "SETdeCONZname"
     }
 }
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
+}
+def SETdeCONZname(){
+    parent.PutRequest("lights/${getDataValue("ID")}","{\"name\": \"${device.getLabel()}\"}")
+}
+def GETdeCONZname(){
+    parent.updateCildLabel(getDataValue("ID"),false)
 }
 def on() {
     if (logEnable) log.debug "ON"
