@@ -22,3 +22,6 @@ to install
 - click get configuration then connect 
 Finally press the any keys on the device and the parent driver will create a child per device press all the buttons on the devices 
 and the parent will adjust how many button the device have. If you encounter any issue please post it no the habitat community page
+
+
+NOTE: if your deCONZ instace is on a doker you will need to enter the ip and port manualy discover wont work
