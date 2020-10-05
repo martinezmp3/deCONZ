@@ -1,10 +1,18 @@
 /* 
-child driver fo deCONZ_rest_api Button
+Parent driver fo deCONZ_rest_api 
 This driver is to control the deCONZ_rest_api from the hubitat hub. 
 I wrote this diver for personal use. If you decide to use it, do it at your own risk. 
 No guarantee or liability is accepted for damages of any kind. 
-        09/26/20 intial release 
-        09/29/20 add suport for motion sensor and Lights debug
+        09/25/20 intial release 
+        09/25/20 doubleTap(button) (report it by @Royski)
+        09/26/20 add suport for motion sensor and Lights 
+        09/27/20 add autodiscover after creation bug fix and code cleaing
+	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	    09/29/20 add connection drop recover (report it by@sburke781
+        10/02/20 add reconect after reboot (report it by @sburke781)
+        10/03/20 add refresh funtion call connect () (report it by @sburke781)
+        10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
+        10/04/20 auto rename from and to deCONZ
 */
 
 metadata {
@@ -18,10 +26,13 @@ metadata {
         command "doubleTap" ,["NUMBER"]            ///   doubleTap(<button number that was double tapped>)
         command "release" ,["NUMBER"]
         command "reciveData", ["string"]
+        command "GETdeCONZname"
+        command "SETdeCONZname"
         attribute "numberOfButtons", "NUMBER" ///	NUMBER	numberOfButtons		//sendEvent(name:"numberOfButtons", value:<number of physical buttons on the device>)	
         attribute "pushed", "NUMBER"          ///	NUMBER	pushed				//sendEvent(name:"pushed", value:<button number that was pushed>)
         attribute "held", "NUMBER"            ///   NUMBER	held				//sendEvent(name:"held", value:<button number that was held>)
         attribute "doubleTapped","NUMBER"	  ///                               //sendEvent(name:"doubleTapped", value:<button number that was double tapped>)
+        attribute "released" ,"NUMBER"
         attribute "battery", "float"
         attribute "lastUpdated", "String"
         attribute "ID", "String"
@@ -31,7 +42,12 @@ metadata {
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
-
+def SETdeCONZname(){
+    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${device.getLabel()}\"}")
+}
+def GETdeCONZname(){
+    parent.updateCildLabel(getDataValue("ID"),true)
+}
 def hold (button){
     if (logEnable) log.debug "button ${button} hold"
     sendEvent(name:"held", value:button, isStateChange: true)
@@ -47,15 +63,13 @@ def push (button){
 
 def release (button){
     if (logEnable) log.debug "button ${button} release"
-    sendEvent(name:"release", value:button, isStateChange: true)
+    sendEvent(name:"released", value:button, isStateChange: true)
 }
 
 def updateLastUpdated (date){
     if (logEnable) log.debug "Last Update:${date}"
     sendEvent(name: "lastUpdated", value: date)
 }
-
-
 def updateBattery (bat){
     if (logEnable) log.debug "new batt:${bat}"
     sendEvent(name: "battery", value: bat)
