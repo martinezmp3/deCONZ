@@ -8,7 +8,7 @@
 
 You will need:
 - deCONZ https://www.phoscon.de/en/conbee2/install
-- the 4 drivers so far more comming
+- the 6 drivers
 
 to install
 - add the devices to your Phoscon-GW 
