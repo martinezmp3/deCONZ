@@ -18,7 +18,7 @@ to install
 - now you need the api key go to the hub page http://you_Phoscon_ip
 - click the hamburger 
 - Select gateway then advance then click on Authenticate app
-- go back to your hubitat hub on the device page click Get Api Key refresh page you will se apy key 
+- go back to your hubitat hub on the device page click Get Api Key refresh page you will se api key 
 - click get configuration then connect 
 Finally press the any keys on the device and the parent driver will create a child per device press all the buttons on the devices 
 and the parent will adjust how many button the device have. If you encounter any issue please post it no the habitat community page
