@@ -7,8 +7,8 @@ No guarantee or liability is accepted for damages of any kind.
         09/25/20 doubleTap(button) (report it by @Royski)
         09/26/20 add suport for motion sensor and Lights 
         09/27/20 add autodiscover after creation bug fix and code cleaing
-	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
-	    09/29/20 add connection drop recover (report it by@sburke781
+	09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	09/29/20 add connection drop recover (report it by@sburke781
         10/02/20 add reconect after reboot (report it by @sburke781)
         10/03/20 add refresh funtion call connect () (report it by @sburke781)
         10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
@@ -16,7 +16,7 @@ No guarantee or liability is accepted for damages of any kind.
 */
 
 metadata {
-    definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:") {
+    definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https://raw.githubusercontent.com/martinezmp3/deCONZ/master/deCONZ_rest_api_Parent.groovy") {
         capability "Initialize"
         capability "Refresh"
         attribute "timeoutCount", "Number"
