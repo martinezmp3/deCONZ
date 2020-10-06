@@ -7,8 +7,8 @@ No guarantee or liability is accepted for damages of any kind.
         09/25/20 doubleTap(button) (report it by @Royski)
         09/26/20 add suport for motion sensor and Lights 
         09/27/20 add autodiscover after creation bug fix and code cleaing
-	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
-	    09/29/20 add connection drop recover (report it by@sburke781
+	09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	09/29/20 add connection drop recover (report it by@sburke781
         10/02/20 add reconect after reboot (report it by @sburke781)
         10/03/20 add refresh funtion call connect () (report it by @sburke781)
         10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
@@ -27,7 +27,7 @@ metadata {
         command "release" ,["NUMBER"]
         command "reciveData", ["string"]
         command "GETdeCONZname"
-        command "SETdeCONZname"
+        command "SETdeCONZname" , ["string"]
         attribute "numberOfButtons", "NUMBER" ///	NUMBER	numberOfButtons		//sendEvent(name:"numberOfButtons", value:<number of physical buttons on the device>)	
         attribute "pushed", "NUMBER"          ///	NUMBER	pushed				//sendEvent(name:"pushed", value:<button number that was pushed>)
         attribute "held", "NUMBER"            ///   NUMBER	held				//sendEvent(name:"held", value:<button number that was held>)
@@ -42,8 +42,9 @@ metadata {
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
-def SETdeCONZname(){
-    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${device.getLabel()}\"}")
+def SETdeCONZname(name){
+    if (name==null) name = device.getLabel()
+    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${name}\"}")
 }
 def GETdeCONZname(){
     parent.updateCildLabel(getDataValue("ID"),true)
