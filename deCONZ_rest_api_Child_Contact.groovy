@@ -22,7 +22,7 @@ metadata {
 		capability "Sensor"
 		attribute "lastUpdated", "String"
         attribute "ID", "String"
-        command "SETdeCONZname"
+        command "SETdeCONZname" , ["string"]
         command "GETdeCONZname"
     }
 }
@@ -30,7 +30,8 @@ preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
 def SETdeCONZname(){
-    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${device.getLabel()}\"}")
+    if (name==null) name = device.getLabel()
+    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${name}\"}")
 }
 def GETdeCONZname(){
     parent.updateCildLabel(getDataValue("ID"),true)
