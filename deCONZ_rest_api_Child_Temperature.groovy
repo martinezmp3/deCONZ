@@ -21,15 +21,17 @@ metadata {
 		attribute "lastUpdated", "String"
         attribute "ID", "String"
         command "GETdeCONZname"
-        command "SETdeCONZname"
+        command "SETdeCONZname" , ["string"]
     }
 }
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
+    input name: "TemperatureC", type: "bool", title: "Enable temperature in C", defaultValue: false
 }
 
-def SETdeCONZname(){
-    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${device.getLabel()}\"}")
+def SETdeCONZname(name){
+    if (name==null) name = device.getLabel()
+    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${name}\"}")
 }
 def GETdeCONZname(){
     parent.updateCildLabel(getDataValue("ID"),true)
