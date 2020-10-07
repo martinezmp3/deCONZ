@@ -39,7 +39,7 @@ metadata {
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
-def SETdeCONZname(){
+def SETdeCONZname(name){
     if (name==null) name = device.getLabel()
     parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${name}\"}")
 }
