@@ -17,7 +17,7 @@ No guarantee or liability is accepted for damages of any kind.
 */
 
 metadata {
-    definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:https://raw.githubusercontent.com/martinezmp3/deCONZ/master/deCONZ_rest_api_Parent.groovy") {
+    definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https://raw.githubusercontent.com/martinezmp3/deCONZ/master/deCONZ_rest_api_Parent.groovy") {
         capability "Initialize"
         capability "Refresh"
         attribute "timeoutCount", "Number"
