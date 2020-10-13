@@ -7,16 +7,17 @@ No guarantee or liability is accepted for damages of any kind.
         09/25/20 doubleTap(button) (report it by @Royski)
         09/26/20 add suport for motion sensor and Lights 
         09/27/20 add autodiscover after creation bug fix and code cleaing
-	09/28/20 import name from deCONZ on child creation (report it by @kevin)
-	09/29/20 add connection drop recover (report it by@sburke781
+	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	    09/29/20 add connection drop recover (report it by@sburke781
         10/02/20 add reconect after reboot (report it by @sburke781)
         10/03/20 add refresh funtion call connect () (report it by @sburke781)
         10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
         10/04/20 auto rename from and to deCONZ
+        10/05/20 custom name box on setdeCONZname funcion
 */
 
 metadata {
-    definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https://raw.githubusercontent.com/martinezmp3/deCONZ/master/deCONZ_rest_api_Parent.groovy") {
+    definition (name: "deCONZ_rest_api_Parent", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:https://raw.githubusercontent.com/martinezmp3/deCONZ/master/deCONZ_rest_api_Parent.groovy") {
         capability "Initialize"
         capability "Refresh"
         attribute "timeoutCount", "Number"
@@ -33,6 +34,9 @@ metadata {
 //        command "webSocketStatus"
         command "GetName"
         command "testCMD"
+        command "SetTimeFormat", [[name:"Format", type: "ENUM", description: "Pick an option", constraints: ["12h","24h"] ] ]
+        command "setPermitjoin" ,["number"]
+        command "unlock",["number"]
     }
 }
 preferences {
@@ -44,13 +48,21 @@ preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
     
 }
+def SetTimeFormat (timeFormat){
+    PutRequest('config',"{\"timeformat\": ${timeFormat}}")
+}
+def setPermitjoin (time){
+    if (!time) time = 60
+    PutRequest('config',"{\"permitjoin\": ${time}}")
+    if (logEnable) log.debug "gateway is set to allow new devices to join for ${time} seconds" 
+}
+def unlock(time){
+    if (!time) time = 60
+    PutRequest('config',"{\"unlock\": ${time}}")
+    if (logEnable) log.debug "gateway is set to be unlock for ${time} seconds"
+}
 def testCMD (){
-    def ToDay = new Date().format("MMM dd yyyy", location.timeZone)
-    def Now = new Date().format("h:mm a", location.timeZone)
-    log.debug "OK since ${ToDay} at ${Now}"
-    //log.debug (new Date().format("h:mm a", location.timeZone))
-    
-    //log.debug "OK since ${(new Date().format("yyyy-MM-dd hh:MM:SS", location.timeZone))}"
+    sendHubCommand(new hubitat.device.HubAction("lan discovery urn:schemas-upnp-org:device:MediaRenderer:1", hubitat.device.Protocol.LAN))
 }
 def updateCildLabel (ID,Sensor){
     if (logEnable) log.debug "updatitng childs label"
@@ -260,32 +272,32 @@ def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
         json = response.getJson()
         if (json.state.buttonevent){
             if (logEnable) log.debug "no error creating Button = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
-        if (json.state.presence){
+        if (json.type.toString().contains("ZHAPresence") || json.type.toString().contains("ZHAWater")){
             if (logEnable) log.debug "no error creating Motion = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Motion", "child-${json.uniqueid}", [name: "Motion(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Motion", "child-${json.uniqueid}", [name: "Motion(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("light")){
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "Light(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "Light(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("plug-in")){
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         ///addition
         if (json.type.toString().contains("ZHAPower")){
             if (logEnable) log.debug "no error creating On/Off = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "ZHAPower(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "ZHAPower(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("OpenClose")){
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Contact", "child-${json.uniqueid}", [name: "contact-sensor(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Contact", "child-${json.uniqueid}", [name: "contact-sensor(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("Temperature")){
             if (logEnable) log.debug "no error creating Temperature = ${json.name}"
-            children = addChildDevice("hubitat","Virtual Temperature Sensor", "child-${json.uniqueid}", [name: "Temperature(${json.uniqueid})", label: json.name, ID: data["dataID"], isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Temperature", "child-${json.uniqueid}", [name: "Temperature(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         //end of addition
     }
@@ -317,15 +329,21 @@ def parse(String description) {
         log.error("Failed to parse json e = ${e}")
         return
     }
-//    children = getChildDevice("child-${json.uniqueid}")
     if (json.state && json.state.buttonevent){
         children.reciveData(json.state.buttonevent)
         if (logEnable) log.debug "Update for ${children.getLabel()}"
         if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
     }
-    if (json.state && json.state.presence!=NULL){
-        children.updateMotion(json.state.presence)
-        if (logEnable) log.debug "Update for ${children.getLabel()} active = ${json.state.presence}"
+    if (json.state && (json.state.presence!=NULL || json.state.water!=NULL)){  //tremporary fix for smartthing motion sensor
+        
+        if (json.state.presence!=NULL) children.updateMotion(json.state.presence)
+        
+        if (json.state.water!=NULL) children.updateMotion(json.state.water)
+        
+        if (logEnable && json.state.presence!=NULL) log.debug "Update for ${children.getLabel()} active = ${json.state.presence}"
+        
+        if (logEnable && json.state.water !=NULL) log.debug "Update for ${children.getLabel()} active = ${json.state.water}"
+        
         if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
     }
     if (json.state && json.r =="lights"){
