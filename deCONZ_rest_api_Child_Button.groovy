@@ -1,5 +1,5 @@
 /* 
-Parent driver fo deCONZ_rest_api 
+Child_Button driver fo deCONZ_rest_api 
 This driver is to control the deCONZ_rest_api from the hubitat hub. 
 I wrote this diver for personal use. If you decide to use it, do it at your own risk. 
 No guarantee or liability is accepted for damages of any kind. 
@@ -7,12 +7,13 @@ No guarantee or liability is accepted for damages of any kind.
         09/25/20 doubleTap(button) (report it by @Royski)
         09/26/20 add suport for motion sensor and Lights 
         09/27/20 add autodiscover after creation bug fix and code cleaing
-	09/28/20 import name from deCONZ on child creation (report it by @kevin)
-	09/29/20 add connection drop recover (report it by@sburke781
+	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	    09/29/20 add connection drop recover (report it by@sburke781
         10/02/20 add reconect after reboot (report it by @sburke781)
         10/03/20 add refresh funtion call connect () (report it by @sburke781)
         10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
         10/04/20 auto rename from and to deCONZ
+        10/12/20 add support for hue tap (report it by@akafester) github
 */
 
 metadata {
@@ -28,6 +29,7 @@ metadata {
         command "reciveData", ["string"]
         command "GETdeCONZname"
         command "SETdeCONZname" , ["string"]
+        command "changeID" , ["string"]
         attribute "numberOfButtons", "NUMBER" ///	NUMBER	numberOfButtons		//sendEvent(name:"numberOfButtons", value:<number of physical buttons on the device>)	
         attribute "pushed", "NUMBER"          ///	NUMBER	pushed				//sendEvent(name:"pushed", value:<button number that was pushed>)
         attribute "held", "NUMBER"            ///   NUMBER	held				//sendEvent(name:"held", value:<button number that was held>)
@@ -41,6 +43,10 @@ metadata {
 }
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
+}
+
+def changeID (ID){
+    updateDataValue("ID",ID)
 }
 def SETdeCONZname(name){
     if (name==null) name = device.getLabel()
@@ -76,8 +82,20 @@ def updateBattery (bat){
     sendEvent(name: "battery", value: bat)
 }
 def reciveData (data){
+    
     int button = data.toInteger()/1000
     int action = data.toInteger() - button *1000
+    //***************************************************************************
+    //Start overwrite for hue tap reported by @akafester on github            //*
+    if (getDataValue("modelid") == "ZGPSWITCH"){                              //*
+        action = 2                                                            //*
+        if (data.toInteger() == 34) button = 1    //Button 1: action = 34     //*
+        if (data.toInteger() == 16) button = 2    //Button 2: action = 16     //*
+        if (data.toInteger() == 17) button = 3    //Button 3: action = 17     //*
+        if (data.toInteger() == 18) button = 4    //Button 4: action = 18     //*
+    }                                                                         //*
+    //end   overwrite for hue tap reported by @akafester on github            //*
+    //***************************************************************************
     if (logEnable) log.debug "button = ${button} action = ${action}"
     if (action == 1){
         hold(button)
