@@ -7,13 +7,14 @@ No guarantee or liability is accepted for damages of any kind.
         09/25/20 doubleTap(button) (report it by @Royski)
         09/26/20 add suport for motion sensor and Lights 
         09/27/20 add autodiscover after creation bug fix and code cleaing
-	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
-	    09/29/20 add connection drop recover (report it by@sburke781
+	09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	09/29/20 add connection drop recover (report it by@sburke781
         10/02/20 add reconect after reboot (report it by @sburke781)
         10/03/20 add refresh funtion call connect () (report it by @sburke781)
         10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
         10/04/20 auto rename from and to deCONZ
         10/05/20 custom name box on setdeCONZname funcion
+	10/15/20 ingnore hub status update 
 */
 
 metadata {
@@ -305,6 +306,7 @@ def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
 def parse(String description) {
     if (logEnable) log.debug "parse call"
     json = null
+    children = null
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
         children = getChildDevice("child-${json.uniqueid}")
@@ -313,8 +315,8 @@ def parse(String description) {
             log.warn "String description not parsed"
             return
         }
-        if (!children && json.r != "groups"){
-            log.warn "Children NOT found creating one### ${json.r}/${json.id}"
+        if ((!children && json.r != "groups") && !json.attr ){ //json.attr.modelid !="RaspBee" ){        
+            log.warn "Children NOT found creating one ${json.r}/${json.id}"
             def getParams = [
             uri: "http://${settings.ip}:${settings.port}/api/${settings.API_key}/${json.r}/${json.id}",
             headers: ["Accept": "application/json, text/plain, */*"],
