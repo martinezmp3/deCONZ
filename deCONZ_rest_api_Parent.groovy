@@ -7,14 +7,16 @@ No guarantee or liability is accepted for damages of any kind.
         09/25/20 doubleTap(button) (report it by @Royski)
         09/26/20 add suport for motion sensor and Lights 
         09/27/20 add autodiscover after creation bug fix and code cleaing
-	09/28/20 import name from deCONZ on child creation (report it by @kevin)
-	09/29/20 add connection drop recover (report it by@sburke781
+	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	    09/29/20 add connection drop recover (report it by@sburke781
         10/02/20 add reconect after reboot (report it by @sburke781)
         10/03/20 add refresh funtion call connect () (report it by @sburke781)
         10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
         10/04/20 auto rename from and to deCONZ
         10/05/20 custom name box on setdeCONZname funcion
-	10/15/20 ingnore hub status update 
+        05/04/21 fix permit join 
+        05/05/21 add State Variables zigbeechannel (request by @sburke781)
+
 */
 
 metadata {
@@ -55,7 +57,8 @@ def SetTimeFormat (timeFormat){
 def setPermitjoin (time){
     if (!time) time = 60
     PutRequest('config',"{\"permitjoin\": ${time}}")
-    if (logEnable) log.debug "gateway is set to allow new devices to join for ${time} seconds" 
+    if (logEnable) log.debug "gateway is set to allow new devices to join for ${time} seconds"
+    
 }
 def unlock(time){
     if (!time) time = 60
@@ -113,8 +116,10 @@ def GetConfigurationCallBack (response, data){
         log.debug "no error"// responce = ${response.getData()}"
         log.debug "websocketport  = ${response.json.websocketport}"
         log.debug "websocketnotifyall = ${response.json.websocketnotifyall}"
+        log.debug "zigbeechannel = ${response.json.zigbeechannel}"
         device.updateSetting("WebSocketPort",response.json.websocketport)
         device.updateSetting("Notifyall",response.json.websocketnotifyall)
+        state.zigbeechannel = response.json.zigbeechannel
     }
 }
 def processCallBack(response, data) {
@@ -265,12 +270,13 @@ def discover(){
     }
 }
 def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
-    if (logEnable) log.debug "addChildCallBack"
+    if (logEnable) log.debug "Adding Child"
         if (response.hasError()){
         log.error "got error # ${response.getStatus()} ${response.getErrorMessage()}"
     }
     if (!response.hasError()){
         json = response.getJson()
+        if (logEnable) log.debug json.type.toString()
         if (json.state.buttonevent){
             if (logEnable) log.debug "no error creating Button = ${json.name}"
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
@@ -284,6 +290,10 @@ def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "Light(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("plug-in")){
+            if (logEnable) log.debug "no error creating Ligth = ${json.name}"
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+        }
+        if (json.type.toString().contains("On/Off output")){
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
@@ -335,6 +345,7 @@ def parse(String description) {
         children.reciveData(json.state.buttonevent)
         if (logEnable) log.debug "Update for ${children.getLabel()}"
         if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
+        if (json.state.lowbattery!=NULL) children.sendEvent(name:"lowbattery", value: json.state.lowbattery, isStateChange: true)
     }
     if (json.state && (json.state.presence!=NULL || json.state.water!=NULL)){  //tremporary fix for smartthing motion sensor
         
@@ -347,6 +358,7 @@ def parse(String description) {
         if (logEnable && json.state.water !=NULL) log.debug "Update for ${children.getLabel()} active = ${json.state.water}"
         
         if (json.state.lastupdated) children.updateLastUpdated(json.state.lastupdated)
+        if (json.state.lowbattery!=NULL) children.sendEvent(name:"lowbattery", value: json.state.lowbattery, isStateChange: true)
     }
     if (json.state && json.r =="lights"){
         if (logEnable) log.debug "Update for ${children.getLabel()} on = ${json.state.on}"
@@ -363,10 +375,12 @@ def parse(String description) {
         if (!json.state.tampered) children.sendEvent(name:"tamper", value: "clear", isStateChange: true)
         if (logEnable) log.debug "Update for ${children.getLabel()} open = ${json.state.open}"
         if (json.state.lastupdated) children.sendEvent(name:"lastUpdated", value: json.state.lastupdated, isStateChange: true)
+        if (json.state.lowbattery!=NULL) children.sendEvent(name:"lowbattery", value: json.state.lowbattery, isStateChange: true)
     }
     if (json.state && json.state.temperature){
         int tempC = (json.state.temperature.toInteger()/100)
         children.sendEvent(name:"temperature", value: celsiusToFahrenheit(tempC), isStateChange: true)
+        if (json.state.lowbattery!=NULL) children.sendEvent(name:"lowbattery", value: json.state.lowbattery, isStateChange: true)
     }
     if (json.config && json.config.battery){
         if (logEnable) log.debug "Battery Update for child-${json.uniqueid} value:${json.config.battery}"
