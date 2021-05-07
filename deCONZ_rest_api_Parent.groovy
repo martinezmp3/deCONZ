@@ -7,8 +7,8 @@ No guarantee or liability is accepted for damages of any kind.
         09/25/20 doubleTap(button) (report it by @Royski)
         09/26/20 add suport for motion sensor and Lights 
         09/27/20 add autodiscover after creation bug fix and code cleaing
-	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
-	    09/29/20 add connection drop recover (report it by@sburke781
+	09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	09/29/20 add connection drop recover (report it by@sburke781
         10/02/20 add reconect after reboot (report it by @sburke781)
         10/03/20 add refresh funtion call connect () (report it by @sburke781)
         10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
@@ -16,6 +16,7 @@ No guarantee or liability is accepted for damages of any kind.
         10/05/20 custom name box on setdeCONZname funcion
         05/04/21 fix permit join 
         05/05/21 add State Variables zigbeechannel (request by @sburke781)
+        05/06/21 add status, timeToRetry, timeoutCount to Current States variables to be access from rule machine (report it by @akafester)
 
 */
 
@@ -152,12 +153,17 @@ def webSocketStatus(String status){
     if (state.timeoutCount == null || state.timeToRetry == null){
         state.timeoutCount = 0
         state.timeToRetry = 10
+        sendEvent(name: "timeoutCount", value: 0)
+        sendEvent(name: "timeToRetry", value: 10)
     }
     if (logEnable) log.debug "Connection status: ${status}"
     if (status.contains("open")){
         state.timeoutCount = 0
         state.timeToRetry = 10
+        sendEvent(name: "timeoutCount", value: 0)
+        sendEvent(name: "timeToRetry", value: 10)
         state.status = "OK"
+        sendEvent(name: "status", value: "OK")
         def Day = new Date().format("MMM dd yy", location.timeZone)
         def Now = new Date().format("h:mm a", location.timeZone)
         state.message = "OK since ${Day} at ${Now}"
@@ -170,26 +176,36 @@ def webSocketStatus(String status){
             def Now = new Date().format("h:mm a", location.timeZone)
             state.message = "tring to reconnect since ${Day} at ${Now}"
             state.status = "attempting reconnect"
+            sendEvent(name: "status", value: "attempting reconnect")
         }
         state.timeoutCount += 1
         if ((state.timeoutCount == 50) && (state.timeToRetry == 10)){ //try to connect every 10 sec 50 times
             state.status = "warning"
+            sendEvent(name: "status", value: "warning")
             state.timeToRetry = 30
+            sendEvent(name: "timeToRetry", value: 30)
         }
         if ((state.timeoutCount == 100) && (state.timeToRetry == 30)){ //try to connect every 30 sec 50 times
             state.status = "critical warning"
+            sendEvent(name: "status", value: "critical warning")
             state.timeToRetry = 1800
+            sendEvent(name: "timeToRetry", value: 1800)
         }
         if ((state.timeoutCount == 150) && (state.timeToRetry == 1800)){ //try to connect every 1/2 hour 50 times
             state.status = "error"
+            sendEvent(name: "status", value: "error")
             state.timeToRetry = 3600
+            sendEvent(name: "timeToRetry", value: 3600)
         }
         if ((state.timeoutCount == 200) && (state.timeToRetry == 3600)){ //try to connect every 1 hour 50 times
             state.status = "critical error"
+            sendEvent(name: "status", value: "critical error")
+            sendEvent(name: "timeToRetry", value: 5400)
             state.timeToRetry = 5400
         }
         if (state.timeoutCount == 250){
             state.status = "fail"
+            sendEvent(name: "status", value: "fail")
         }
         log.error "conection problem: ${status} retry in ${state.timeToRetry} second atemp(${state.timeoutCount})"
         if ((state.status != "fail") && (settings.ip !=null) && (settings.WebSocketPort!=null)){
