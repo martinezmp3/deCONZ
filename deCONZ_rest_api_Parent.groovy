@@ -7,8 +7,8 @@ No guarantee or liability is accepted for damages of any kind.
         09/25/20 doubleTap(button) (report it by @Royski)
         09/26/20 add suport for motion sensor and Lights 
         09/27/20 add autodiscover after creation bug fix and code cleaing
-	09/28/20 import name from deCONZ on child creation (report it by @kevin)
-	09/29/20 add connection drop recover (report it by@sburke781
+	    09/28/20 import name from deCONZ on child creation (report it by @kevin)
+	    09/29/20 add connection drop recover (report it by@sburke781
         10/02/20 add reconect after reboot (report it by @sburke781)
         10/03/20 add refresh funtion call connect () (report it by @sburke781)
         10/04/20 save time and date of connection event/child button fix typo released (report it by@sburke781)
@@ -17,7 +17,8 @@ No guarantee or liability is accepted for damages of any kind.
         05/04/21 fix permit join 
         05/05/21 add State Variables zigbeechannel (request by @sburke781)
         05/06/21 add status, timeToRetry, timeoutCount to Current States variables to be access from rule machine (report it by @akafester)
-
+        05/07/21 add shade support 
+        05/08/21 add ChangeZigbeeChannel and ZigbeeChannel variable to Current States (report it by @sburke781)
 */
 
 metadata {
@@ -27,6 +28,7 @@ metadata {
         attribute "timeoutCount", "Number"
         attribute "timeToRetry", "Number"
         attribute "status", "string"
+        attribute "zigbeechannel", "Number"
         command "SendMsg", ["string"]
         command "close"
         command "discover"
@@ -41,6 +43,7 @@ metadata {
         command "SetTimeFormat", [[name:"Format", type: "ENUM", description: "Pick an option", constraints: ["12h","24h"] ] ]
         command "setPermitjoin" ,["number"]
         command "unlock",["number"]
+        command "ChangeZigbeeChannel" , [[name:"Format", type: "ENUM", description: "Pick an channel", constraints: [11,12,13,14,15,16,17,18,19,20,21,22,23,24,25] ] ]
     }
 }
 preferences {
@@ -54,6 +57,10 @@ preferences {
 }
 def SetTimeFormat (timeFormat){
     PutRequest('config',"{\"timeformat\": ${timeFormat}}")
+}
+
+def ChangeZigbeeChannel (channel){
+    PutRequest('config',"{\"zigbeechannel\": ${channel}}")
 }
 def setPermitjoin (time){
     if (!time) time = 60
@@ -121,6 +128,7 @@ def GetConfigurationCallBack (response, data){
         device.updateSetting("WebSocketPort",response.json.websocketport)
         device.updateSetting("Notifyall",response.json.websocketnotifyall)
         state.zigbeechannel = response.json.zigbeechannel
+        sendEvent(name: "zigbeechannel", value: response.json.zigbeechannel)
     }
 }
 def processCallBack(response, data) {
@@ -293,6 +301,7 @@ def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
     if (!response.hasError()){
         json = response.getJson()
         if (logEnable) log.debug json.type.toString()
+        
         if (json.state.buttonevent){
             if (logEnable) log.debug "no error creating Button = ${json.name}"
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
@@ -327,6 +336,13 @@ def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
             children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Temperature", "child-${json.uniqueid}", [name: "Temperature(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         //end of addition
+        //05/07/21 addition
+         if (json.type.toString().contains("Window")){
+            if (logEnable) log.debug "no error creating Window = ${json.name}"
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Window", "child-${json.uniqueid}", [name: "Window(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            
+        }
+        //05/07/21 end of addition
     }
 }
 def parse(String description) {
@@ -379,9 +395,16 @@ def parse(String description) {
     if (json.state && json.r =="lights"){
         if (logEnable) log.debug "Update for ${children.getLabel()} on = ${json.state.on}"
         children.updatePower(json.state.on)
-        if (json.state.bri) children.updateBri(json.state.bri)
-        if (json.state.colormode) children.updateColormode(json.state.colormode)
-        if (json.state.ct) children.updateCt(json.state.ct)
+        if (!json.state.lift){ //is not a window
+            if (json.state.bri) children.updateBri(json.state.bri)
+            if (json.state.colormode) children.updateColormode(json.state.colormode)
+            if (json.state.ct) children.updateCt(json.state.ct)
+        }
+        if (json.state.lift){  //is a window
+            children.updateLift(json.state.lift)
+            if (json.state.bri) children.updateBri(json.state.bri)
+            if (json.state.open!=NULL) children.updateOpen(json.state.open)
+        }
     }
     
     if (json.state && json.state.open!=NULL){
