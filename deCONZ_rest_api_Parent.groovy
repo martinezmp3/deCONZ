@@ -352,6 +352,7 @@ def parse(String description) {
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
         children = getChildDevice("child-${json.uniqueid}")
+        log.debug json.uniqueid.take(23)
         if (logEnable) log.debug "recive: ${json}"    
         if(json == null){
             log.warn "String description not parsed"
@@ -402,12 +403,12 @@ def parse(String description) {
         }
         if (json.state.lift){  //is a window
             children.updateLift(json.state.lift)
-            if (json.state.bri) children.updateBri(json.state.bri)
-            if (json.state.open!=NULL) children.updateOpen(json.state.open)
+            //if (json.state.bri) children.updateBri(json.state.bri)
+            //if (json.state.open!=NULL) children.updateOpen(json.state.open)
         }
     }
     
-    if (json.state && json.state.open!=NULL){
+    if (json.state && json.state.open!=NULL ){
         if (json.state.open) children.sendEvent(name:"contact", value: "open", isStateChange: true)
         if (!json.state.open) children.sendEvent(name:"contact", value: "close", isStateChange: true)
         if (json.state.tampered) children.sendEvent(name:"tamper", value: "detected", isStateChange: true)
