@@ -19,18 +19,24 @@ metadata {
     definition (name: "deCONZ_rest_api_Child_Motion", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:") {
 		capability "Motion Sensor"
 		capability "Sensor"
+        capability "TemperatureMeasurement"
         attribute "dark", "bool"
         attribute "battery", "float"
 		attribute "lastUpdated", "String"
         attribute "ID", "String"
-        command "SETdeCONZname" , ["string"]
+        attribute "lowbattery", "bool"  ///lowbattery:false
+        attribute "temperature", "Number"
+        command "SETdeCONZname" , ["String"]
         command "GETdeCONZname"
+        command "changeID" , ["String"]
     }
 }
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
-
+def changeID (ID){
+    updateDataValue("ID",ID)
+}
 def SETdeCONZname(name){
     if (name==null) name = device.getLabel()
     parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${name}\"}")
@@ -43,10 +49,15 @@ def updateBattery (bat){
     if (logEnable) log.debug "new batt:${bat}"
     sendEvent(name: "battery", value: bat)
 }
-def updateMotion (data){
-    if (logEnable) log.debug "motion change :${data}"
-    if (data)  sendEvent(name: "motion", value: "active")
-    if (!data)  sendEvent(name: "motion", value: "inactive")
+def updateMotion (data){   
+    if (data){
+        sendEvent(name: "motion", value: "active")
+        if (logEnable) log.debug "motion change :active"
+    }
+    if (!data){
+        sendEvent(name: "motion", value: "inactive")
+        if (logEnable) log.debug "motion change :inactive"
+    }
 }
 def updateLastUpdated (date){
     if (logEnable) log.debug "Last Update:${date}"
