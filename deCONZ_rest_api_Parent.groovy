@@ -19,6 +19,7 @@ No guarantee or liability is accepted for damages of any kind.
         05/06/21 add status, timeToRetry, timeoutCount to Current States variables to be access from rule machine (report it by @akafester)
         05/07/21 add shade support 
         05/08/21 add ChangeZigbeeChannel and ZigbeeChannel variable to Current States (report it by @sburke781)
+        05/09/21 Mayor driver change proceed with caution change network id to stop unnesesary child 
 */
 
 metadata {
@@ -304,42 +305,42 @@ def addChildCallBack (response, data){  ///[dataID: json.uniqueid]
         
         if (json.state.buttonevent){
             if (logEnable) log.debug "no error creating Button = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid}", [name: "Button(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Button", "child-${json.uniqueid.take(23)}", [name: "Button(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("ZHAPresence") || json.type.toString().contains("ZHAWater")){
             if (logEnable) log.debug "no error creating Motion = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Motion", "child-${json.uniqueid}", [name: "Motion(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Motion", "child-${json.uniqueid.take(23)}", [name: "Motion(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("light")){
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "Light(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid.take(23)}", [name: "Light(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("plug-in")){
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid.take(23)}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("On/Off output")){
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid.take(23)}", [name: "plug-in(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         ///addition
         if (json.type.toString().contains("ZHAPower")){
             if (logEnable) log.debug "no error creating On/Off = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid}", [name: "ZHAPower(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Light", "child-${json.uniqueid.take(23)}", [name: "ZHAPower(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("OpenClose")){
             if (logEnable) log.debug "no error creating Ligth = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Contact", "child-${json.uniqueid}", [name: "contact-sensor(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Contact", "child-${json.uniqueid.take(23)}", [name: "contact-sensor(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         if (json.type.toString().contains("Temperature")){
             if (logEnable) log.debug "no error creating Temperature = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Temperature", "child-${json.uniqueid}", [name: "Temperature(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Temperature", "child-${json.uniqueid.take(23)}", [name: "Temperature(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
         }
         //end of addition
         //05/07/21 addition
          if (json.type.toString().contains("Window")){
             if (logEnable) log.debug "no error creating Window = ${json.name}"
-            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Window", "child-${json.uniqueid}", [name: "Window(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
+            children = addChildDevice("jorge.martinez","deCONZ_rest_api_Child_Window", "child-${json.uniqueid.take(23)}", [name: "Window(${json.uniqueid})", label: json.name, ID: data["dataID"],manufacturername: json.manufacturername,modelid: json.modelid,type: json.type, isComponent: false])
             
         }
         //05/07/21 end of addition
@@ -351,9 +352,9 @@ def parse(String description) {
     children = null
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
-        children = getChildDevice("child-${json.uniqueid}")
+        children = getChildDevice("child-${json.uniqueid.take(23)}")
         log.debug json.uniqueid.take(23)
-        if (logEnable) log.debug "recive: ${json}"    
+        if (logEnable) log.debug "recive: ${json}"  
         if(json == null){
             log.warn "String description not parsed"
             return
