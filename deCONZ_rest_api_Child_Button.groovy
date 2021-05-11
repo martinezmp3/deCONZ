@@ -22,6 +22,7 @@ metadata {
         capability "HoldableButton"
         capability "DoubleTapableButton"
         capability "ReleasableButton"
+        capability "TemperatureMeasurement"
         command "hold" ,["NUMBER"]            ///   hold(<button number that was held>)
         command "push" ,["NUMBER"]            ///   push(<button number that was pushed>)
         command "doubleTap" ,["NUMBER"]            ///   doubleTap(<button number that was double tapped>)
@@ -38,6 +39,8 @@ metadata {
         attribute "battery", "float"
         attribute "lastUpdated", "String"
         attribute "ID", "String"
+        attribute "lowbattery", "bool"  ///lowbattery:false
+        attribute "temperature", "Number"
         
     }
 }
@@ -87,7 +90,7 @@ def reciveData (data){
     int action = data.toInteger() - button *1000
     //***************************************************************************
     //Start overwrite for hue tap reported by @akafester on github            //*
-    if (getDataValue("modelid") == "ZGPSWITCH"){                              //*
+    if (getDataValue("modelid") == "ZGPSWITCH"){                                 //*
         action = 2                                                            //*
         if (data.toInteger() == 34) button = 1    //Button 1: action = 34     //*
         if (data.toInteger() == 16) button = 2    //Button 2: action = 16     //*
