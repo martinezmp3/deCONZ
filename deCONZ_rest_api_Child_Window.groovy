@@ -12,10 +12,13 @@ metadata {
         capability "WindowShade"
         capability "SwitchLevel"
         capability "Switch"
+        capability "TemperatureMeasurement"
         attribute "bri", "Number"
  		attribute "lastUpdated", "String"
         attribute "ID", "String"
         attribute "lift", "Number"
+        attribute "battery", "Number"
+        attribute "temperature", "Number"
         command "GETdeCONZname"
         command "SETdeCONZname" , ["string"]
         command "changeID" , ["string"]
@@ -27,7 +30,14 @@ preferences {
 def updatePower(status) {
     if (logEnable) log.debug "update updatePower on == ${status}"
     if (status) sendEvent(name: "switch", value: "on")
-    if (!status) sendEvent(name: "switch", value: "off")
+    if (!status) {
+        sendEvent(name: "switch", value: "off")
+        sendEvent(name: "windowShade", value: "open")
+        sendEvent(name: "position", value: 0)
+        sendEvent(name: "lift", value: 0)
+        sendEvent(name: "level", value:0)
+        
+    }
 }
 def updateBri (updateValue) {
     if (logEnable) log.debug "update updateBri: ${updateValue}"
@@ -36,13 +46,21 @@ def updateBri (updateValue) {
 }
 def updateOpen(updateValue) {
     if (logEnable) log.debug "update Open: ${updateValue}"
-    sendEvent(name: "open", value: updateValue)
+//    sendEvent(name: "open", value: updateValue)
+//    if (updateValue) sendEvent(name: "windowShade", value: "open")
+//    if (!updateValue) sendEvent(name: "windowShade", value: "close")
 }
 
 def updateLift(updateValue) {
+    if (state.Previouslift == NULL) state.Previouslift = updateValue
     if (logEnable) log.debug "update Lift: ${updateValue}"
     sendEvent(name: "lift", value: updateValue)
     sendEvent(name: "level", value: updateValue, isStateChange: true)
+    sendEvent(name: "position", value: updateValue, isStateChange: true)
+    if (state.Previouslift>updateValue) sendEvent(name: "windowShade", value: "opening")
+    if (state.Previouslift<updateValue) sendEvent(name: "windowShade", value: "closing")
+    if (updateValue == 100) sendEvent(name: "windowShade", value: "close")
+    state.Previouslift = updateValue
 }
 def changeID (ID){
     updateDataValue("ID",ID)
@@ -53,6 +71,10 @@ def SETdeCONZname(name){
 }
 def GETdeCONZname(){
     parent.updateCildLabel(getDataValue("ID"),false)
+}
+def updateBattery (bat){
+    if (logEnable) log.debug "new batt:${bat}"
+    sendEvent(name: "battery", value: bat)
 }
 def on() {
     if (logEnable) log.debug "ON"
@@ -65,19 +87,21 @@ def off() {
     parent.PutRequest("lights/${getDataValue("ID")}/state",'{"open": false}')
 }
 def setPosition(position){
-    setLevel (position)
+    //setLevel (position)
+    parent.PutRequest("lights/${getDataValue("ID")}/state","{\"lift\":${position}}")
 }
 def open(){
-    on()
+    parent.PutRequest("lights/${getDataValue("ID")}/state",'{"open": true}')
 }
 def close(){
-    off()
+    parent.PutRequest("lights/${getDataValue("ID")}/state",'{"open": false}')
 }
 def stop (){
     parent.PutRequest("lights/${getDataValue("ID")}/state","{\"lift\":\"stop\"")
 }
 def setLevel (Percent){
     if (logEnable) log.debug "Value is: ${Value}/Percent is: ${Percent}"
-    sendEvent(name: "level", value: Percent, isStateChange: true)
+    sendEvent(name: "position", value: Percent, isStateChange: true)
+//    sendEvent(name: "level", value: Percent, isStateChange: true)
     parent.PutRequest("lights/${getDataValue("ID")}/state","{\"lift\":${Percent}}")
 }
