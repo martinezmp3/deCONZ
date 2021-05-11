@@ -1,5 +1,5 @@
 /* 
-Parent driver fo deCONZ_rest_api 
+Child_Contact driver fo deCONZ_rest_api 
 This driver is to control the deCONZ_rest_api from the hubitat hub. 
 I wrote this diver for personal use. If you decide to use it, do it at your own risk. 
 No guarantee or liability is accepted for damages of any kind. 
@@ -20,14 +20,21 @@ metadata {
 		capability "ContactSensor"
         capability "Battery"
 		capability "Sensor"
+        capability "TemperatureMeasurement"
 		attribute "lastUpdated", "String"
         attribute "ID", "String"
+        attribute "lowbattery", "bool"  ///lowbattery:false
+        attribute "temperature", "Number"
         command "SETdeCONZname" , ["string"]
         command "GETdeCONZname"
+        command "changeID" , ["string"]
     }
 }
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
+}
+def changeID (ID){
+    updateDataValue("ID",ID)
 }
 def SETdeCONZname(name){
     if (name==null) name = device.getLabel()
