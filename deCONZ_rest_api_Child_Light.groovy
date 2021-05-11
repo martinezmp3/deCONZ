@@ -19,8 +19,8 @@ metadata {
     definition (name: "deCONZ_rest_api_Child_Light", namespace: "jorge.martinez", author: "Jorge Martinez", importUrl: "https:") {
 		capability "Bulb"
         capability "Light"
-//        capability "ColorMode"
-//        capability "ColorControl"
+        //capability "ColorMode"
+        //capability "ColorControl"
         capability "ColorTemperature"
         capability "SwitchLevel"
         capability "Switch"
@@ -34,14 +34,25 @@ metadata {
 //        command "setLevel", ["Number"]
         command "GETdeCONZname"
         command "SETdeCONZname" , ["string"]
+        command "changeID" , ["string"]
     }
 }
 preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
+def setColor(Color){
+    if (logEnable) {
+        log.debug ("SetColor hue:${Color.hue} saturation:${Color.saturation} level:${Color.level}")
+    }
+
+                
+}
+def changeID (ID){
+    updateDataValue("ID",ID)
+}
 def SETdeCONZname(name){
     if (name==null) name = device.getLabel()
-    parent.PutRequest("sensors/${getDataValue("ID")}","{\"name\": \"${name}\"}")
+    parent.PutRequest("lights/${getDataValue("ID")}","{\"name\": \"${name}\"}")
 }
 def GETdeCONZname(){
     parent.updateCildLabel(getDataValue("ID"),false)
